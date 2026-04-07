@@ -29,8 +29,8 @@
     <dw:DialogWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Style.xaml"/>
-                <ResourceDictionary Source="Converter.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/EFCorePowerTools;component/Dialogs/Style.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/EFCorePowerTools;component/Dialogs/Converter.xaml"/>
                 <ResourceDictionary>
                     <Style x:Key="SourceSelectionComboBoxStyle" TargetType="ComboBox">
                         <Setter Property="Margin" Value="0, 12, 0, 12"/>
