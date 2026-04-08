@@ -94,11 +94,13 @@ if (File.Exists(devPathFile))
 }
 ```
  
-6. Set breakpoint on `if (File.Exists(devPathFile))`. Run `EFCorePowerTools` project.
+6. Set breakpoint on `if (File.Exists(devPathFile))`.
 
-7. While breakpoint hit, open the `devPathFile` path, copy `efreveng80/90/100.devpath.txt` unto the path. (For mine it's `%LOCALAPPDATA%\Microsoft\VisualStudio\18.0_0624a8cbExp\Extensions\ErikEJ\EF Core Power Tools\2.6.0`)
+7. Always Build before run. Run `EFCorePowerTools` project.
 
-8. Continue running, the new code should be running.
+8. While breakpoint hit, open the `devPathFile` path, copy `efreveng80/90/100.devpath.txt` unto the path. (For mine it's `%LOCALAPPDATA%\Microsoft\VisualStudio\18.0_0624a8cbExp\Extensions\ErikEJ\EF Core Power Tools\2.6.0`)
+
+9. Continue running, the new code should be running.
 
 You don't need to set breakpoint anymore, unless the `efreveng80/90/100.devpath.txt` is been removed.
 
@@ -121,3 +123,10 @@ You don't need to set breakpoint anymore, unless the `efreveng80/90/100.devpath.
 4. After Refresh, it will popup "Choose Just-In-Time Debugger" dialog, select "EFCorePowerTools" one.
 5. Then you can set breakpoint and debug in `efreveng80/90/100` projects.
 
+## Updating code
+
+1. You don't need to stop Exp Visual Studio 2026 Insiders to update code. Just build, even it has error:
+```
+Problem occurred while extracting the vsix to the experimental extensions path. The process cannot access the file '%LOCALAPPDATA%\Microsoft\VisualStudio\18.0_0624a8cbExp\Extensions\ErikEJ\EF Core Power Tools\2.6.0\AdysTech.CredentialManager.dll' because it is being used by another process.
+```
+   As long as `EFCorePowerTools\src\Core\efreveng80\bin\Debug\net8.0\RevEng.Core.80.dll` is updated, the Refresh will use the newest one.

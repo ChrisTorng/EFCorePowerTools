@@ -33,6 +33,7 @@ namespace RevEng.Core.Routines.Extensions
             new Dictionary<string, string>()
             {
                 { "bool", "boolean" },
+                { "citext", "text" },
                 { "decimal", "numeric" },
                 { "double precision", "double" },
                 { "float8", "double" },
@@ -120,6 +121,7 @@ namespace RevEng.Core.Routines.Extensions
                 case NpgsqlDbType.Jsonb:
                 case NpgsqlDbType.Xml:
                 case NpgsqlDbType.TsQuery:
+                case NpgsqlDbType.Citext:
                     return typeof(string);
 
                 case NpgsqlDbType.Date:
