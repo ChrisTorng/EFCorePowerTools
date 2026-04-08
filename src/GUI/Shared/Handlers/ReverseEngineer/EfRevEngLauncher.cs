@@ -294,6 +294,19 @@ namespace EFCorePowerTools.Handlers.ReverseEngineer
             Debug.Assert(fromDir != null, nameof(fromDir) + " != null");
             Debug.Assert(toDir != null, nameof(toDir) + " != null");
 
+            // Development override: use local build output when a .devpath.txt file is present.
+            // This file is written by the WriteDevPathForVSIX post-build target (Debug builds only).
+            var devPathFile = Path.Combine(fromDir, exeName.Replace(".dll", ".devpath.txt"));
+            if (File.Exists(devPathFile))
+            {
+                var devDir = File.ReadAllText(devPathFile).Trim();
+                var devFullPath = Path.Combine(devDir, exeName);
+                if (Directory.Exists(devDir) && File.Exists(devFullPath))
+                {
+                    return devFullPath;
+                }
+            }
+
             var fullPath = Path.Combine(toDir, exeName);
 
             if (Directory.Exists(toDir)

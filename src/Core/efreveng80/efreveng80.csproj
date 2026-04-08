@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,6 +13,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RevEng.Core.80\RevEng.Core.80.csproj" />
-  </ItemGroup>  
+  </ItemGroup>
+
+  <Target Name="WriteDevPathForVSIX" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <PropertyGroup>
+      <VSIXProjDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\GUI\EFCorePowerTools\'))</VSIXProjDir>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(VSIXProjDir)$(AssemblyName).devpath.txt" Lines="$(TargetDir)" Overwrite="true" />
+  </Target>
 
 </Project>

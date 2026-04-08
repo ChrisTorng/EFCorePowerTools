@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -158,6 +158,12 @@ order by procedure_schema,
             {
                 if (par != null)
                 {
+                    ////// Skip null rows produced by LEFT JOIN for functions with no parameters
+                    ////if (par["parameter_mode"] is DBNull)
+                    ////{
+                    ////    continue;
+                    ////}
+
                     var parameter = new ModuleParameter()
                     {
                         Name = par["parameter_name"].ToString(),
