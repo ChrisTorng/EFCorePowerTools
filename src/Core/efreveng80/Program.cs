@@ -30,6 +30,15 @@ namespace EfReveng
             {
                 Console.OutputEncoding = Encoding.UTF8;
 
+#if DEBUG
+                // When launched from VSIX in development mode (via .devpath.txt), trigger JIT debugger
+                // so the developer can attach Visual Studio to step through efreveng code.
+                if (Environment.GetEnvironmentVariable("EFREVENG_WAIT_FOR_DEBUGGER") == "1")
+                {
+                    Debugger.Launch();
+                }
+#endif
+
                 ArgumentNullException.ThrowIfNull(args);
 
                 if (args.Length > 0)

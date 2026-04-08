@@ -37,9 +37,12 @@ This is for supporting PostgreSQL.
 
 ## Extensions
 
-1. In Exp Visual Studio 2026 Insiders, remove original EFCore Power Tools extension.
+1. In Exp Visual Studio 2026 Insiders.
 2. Add [Npgsql PostgreSQL Integration](https://marketplace.visualstudio.com/items?itemName=RojanskyS.NpgsqlPostgreSQLIntegration) extension.
-3. Add new connection to PostgreSQL database while using EFCore Power Tools - Refresh.
+3. Remove original EFCore Power Tools extension.
+4. Close Exp Visual Studio 2026 Insiders. It will trigger VSIX Installer.
+5. Run Exp Visual Studio 2026 Insiders.
+6. Add new connection to PostgreSQL database while using EFCore Power Tools - Refresh.
 
 ## Complex approach to using current code (or it uses prebuilt zip instead of current code)
 
@@ -66,15 +69,12 @@ src/GUI/EFCorePowerTools/efreveng100.devpath.txt
 ```
 <Content Include="efreveng80.devpath.txt" Condition="Exists'efreveng80.devpath.txt')">
   <IncludeInVSIX>true</IncludeInVSIX>
-  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 </Content>
 <Content Include="efreveng90.devpath.txt" Condition="Exists'efreveng90.devpath.txt')">
   <IncludeInVSIX>true</IncludeInVSIX>
-  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 </Content>
 <Content Include="efreveng100.devpath.txt" Condition="Exists'efreveng100.devpath.txt')">
   <IncludeInVSIX>true</IncludeInVSIX>
-  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 </Content>
 ```
 
@@ -99,3 +99,25 @@ if (File.Exists(devPathFile))
 7. While breakpoint hit, open the `devPathFile` path, copy `efreveng80/90/100.devpath.txt` unto the path. (For mine it's `%LOCALAPPDATA%\Microsoft\VisualStudio\18.0_0624a8cbExp\Extensions\ErikEJ\EF Core Power Tools\2.6.0`)
 
 8. Continue running, the new code should be running.
+
+You don't need to set breakpoint anymore, unless the `efreveng80/90/100.devpath.txt` is been removed.
+
+## Debug
+
+1. `EfRevEngLauncher.cs` add `IsDevMode` with `EFREVENG_WAIT_FOR_DEBUGGER` environment settings.
+2. `efreveng80\Program.cs` in `Main()` add:
+```
+#if DEBUG
+    // When launched from VSIX in development mode (via .devpath.txt),  trigger JIT debugger
+    // so the developer can attach Visual Studio to step through efreveng  code.
+    if (Environment.GetEnvironmentVariable("EFREVENG_WAIT_FOR_DEBUGGER") ==  "1")
+    {
+        Debugger.Launch();
+    }
+#endif
+```
+
+3. Start `EFCorePowerTools` project without debugging.
+4. After Refresh, it will popup "Choose Just-In-Time Debugger" dialog, select "EFCorePowerTools" one.
+5. Then you can set breakpoint and debug in `efreveng80/90/100` projects.
+

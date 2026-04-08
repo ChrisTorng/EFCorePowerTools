@@ -175,15 +175,12 @@
     </Content>
     <Content Include="efreveng80.devpath.txt" Condition="Exists('efreveng80.devpath.txt')">
       <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="efreveng90.devpath.txt" Condition="Exists('efreveng90.devpath.txt')">
       <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="efreveng100.devpath.txt" Condition="Exists('efreveng100.devpath.txt')">
       <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Westwind.WPF.Statusbar\Assets\Icons\circle-check.svg" />
     <Content Include="Westwind.WPF.Statusbar\Assets\Icons\circle-exclamation.svg" />

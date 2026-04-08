@@ -229,13 +229,19 @@ namespace EFCorePowerTools.Handlers.ReverseEngineer
                 throw new InvalidOperationException($"Reverse engineer error: Unable to launch 'dotnet' version {version}. Do you have the runtime installed? Check with 'dotnet --list-runtimes'");
             }
 
-            var launchPath = DropNetCoreFiles();
+            var (launchPath, isDevMode) = DropNetCoreFiles();
 
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
                 Arguments = $"\"{launchPath}\" {arguments}",
             };
+
+            if (isDevMode)
+            {
+                startInfo.Environment["EFREVENG_WAIT_FOR_DEBUGGER"] = "1";
+            }
+
             return startInfo;
         }
 
@@ -244,13 +250,18 @@ namespace EFCorePowerTools.Handlers.ReverseEngineer
             var path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()) + ".json";
             File.WriteAllText(path, options.Write(), Encoding.UTF8);
 
-            var launchPath = DropNetCoreFiles();
+            var (launchPath, isDevMode) = DropNetCoreFiles();
 
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
                 Arguments = $"\"{launchPath}\" \"{path}\"",
             };
+
+            if (isDevMode)
+            {
+                startInfo.Environment["EFREVENG_WAIT_FOR_DEBUGGER"] = "1";
+            }
 
             var standardOutput = await RunProcessAsync(startInfo);
 
@@ -286,7 +297,7 @@ namespace EFCorePowerTools.Handlers.ReverseEngineer
             return sdks.Exists(s => s.StartsWith($"Microsoft.NETCore.App {version}.", StringComparison.OrdinalIgnoreCase));
         }
 
-        private string DropNetCoreFiles()
+        private (string FullPath, bool IsDevMode) DropNetCoreFiles()
         {
             var toDir = Path.Combine(Path.GetTempPath(), revengFolder);
             var fromDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -303,7 +314,7 @@ namespace EFCorePowerTools.Handlers.ReverseEngineer
                 var devFullPath = Path.Combine(devDir, exeName);
                 if (Directory.Exists(devDir) && File.Exists(devFullPath))
                 {
-                    return devFullPath;
+                    return (devFullPath, IsDevMode: true);
                 }
             }
 
@@ -313,7 +324,7 @@ namespace EFCorePowerTools.Handlers.ReverseEngineer
                 && File.Exists(fullPath)
                 && Directory.EnumerateFiles(toDir, "*", SearchOption.TopDirectoryOnly).Count() >= 97)
             {
-                return fullPath;
+                return (fullPath, IsDevMode: false);
             }
 
             if (Directory.Exists(toDir))
@@ -347,7 +358,7 @@ namespace EFCorePowerTools.Handlers.ReverseEngineer
                 }
             }
 
-            return fullPath;
+            return (fullPath, IsDevMode: false);
         }
     }
 }
