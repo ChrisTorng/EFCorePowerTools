@@ -127,25 +127,26 @@ namespace RevEng.Core.Routines
             using var dtResult = new DataTable();
             var result = new List<ModuleParameter>();
 
-            var sql = $@"
+			var sql = $@"
 select proc.specific_schema as procedure_schema,
-       proc.routine_name as procedure_name,
-       args.parameter_name,
-       args.parameter_mode,
-       args.data_type,
+	   proc.routine_name as procedure_name,
+	   args.parameter_name,
+	   args.parameter_mode,
+	   args.data_type,
+	   args.udt_name,
 	   args.character_maximum_length,
 	   args.numeric_precision,
 	   args.numeric_scale
 from information_schema.routines proc
 left join information_schema.parameters args
-          on proc.specific_schema = args.specific_schema
-          and proc.specific_name = args.specific_name
+		  on proc.specific_schema = args.specific_schema
+		  and proc.specific_name = args.specific_name
 where proc.routine_schema not in ('pg_catalog', 'information_schema')
-     and (proc.routine_type = 'PROCEDURE' OR proc.routine_type = 'FUNCTION')
+	 and (proc.routine_type = 'PROCEDURE' OR proc.routine_type = 'FUNCTION')
 order by procedure_schema,
-         proc.specific_name,
-         procedure_name,
-         args.ordinal_position;";
+		 proc.specific_name,
+		 procedure_name,
+		 args.ordinal_position;";
 
             using var adapter = new NpgsqlDataAdapter
             {
@@ -169,7 +170,9 @@ order by procedure_schema,
                         Name = par["parameter_name"].ToString(),
                         RoutineName = par["procedure_name"].ToString(),
                         RoutineSchema = par["procedure_schema"].ToString(),
-                        StoreType = par["data_type"].ToString(),
+                        StoreType = par["data_type"].ToString() == "USER-DEFINED"
+                            ? par["udt_name"].ToString()
+                            : par["data_type"].ToString(),
                         Length = (par["character_maximum_length"] is DBNull) ? (int?)null : int.Parse(par["character_maximum_length"].ToString()!, CultureInfo.InvariantCulture),
                         Precision = (par["numeric_precision"] is DBNull) ? (int?)null : int.Parse(par["Precision"].ToString()!, CultureInfo.InvariantCulture),
                         Scale = (par["numeric_scale"] is DBNull) ? (int?)null : int.Parse(par["Scale"].ToString()!, CultureInfo.InvariantCulture),
