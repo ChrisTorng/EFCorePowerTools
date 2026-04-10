@@ -283,13 +283,32 @@ namespace RevEng.Core
 
                 if (schema != null)
                 {
+                    TableRenamer tableRenamer = null;
+
                     if (schema.Tables != null && schema.Tables.Exists(t => t.Name == sqlObject.Name))
                     {
-                        sqlObject.NewName = schema.Tables.SingleOrDefault(t => t.Name == sqlObject.Name)?.NewName;
+                        tableRenamer = schema.Tables.SingleOrDefault(t => t.Name == sqlObject.Name);
+                        sqlObject.NewName = tableRenamer?.NewName;
                     }
                     else if (!string.IsNullOrEmpty(schema.TableRegexPattern) && schema.TablePatternReplaceWith != null)
                     {
                         sqlObject.NewName = RegexNameReplace(schema.TableRegexPattern, sqlObject.Name, schema.TablePatternReplaceWith);
+                    }
+
+                    // Apply column renaming to routine result elements
+                    if (sqlObject is Routine routine && tableRenamer?.Columns?.Count > 0)
+                    {
+                        foreach (var resultSet in routine.Results)
+                        {
+                            foreach (var resultElement in resultSet)
+                            {
+                                var col = tableRenamer.Columns.FirstOrDefault(c => c.Name == resultElement.Name);
+                                if (col != null && !string.IsNullOrEmpty(col.NewName))
+                                {
+                                    resultElement.NewName = col.NewName;
+                                }
+                            }
+                        }
                     }
                 }
             }

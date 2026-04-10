@@ -94,7 +94,19 @@ namespace RevEng.Core.Routines
 
             foreach (var property in resultElements.OrderBy(e => e.Ordinal))
             {
-                var propertyNameAndAttribute = ScaffoldHelper.GeneratePropertyName(property.Name, Code, usePascalCase);
+                // If an explicit rename is provided via renaming.json Columns, use it directly
+                Tuple<string, string> propertyNameAndAttribute;
+                if (!string.IsNullOrEmpty(property.NewName))
+                {
+                    var columnAttr = property.NewName.Equals(property.Name, StringComparison.Ordinal)
+                        ? null
+                        : $"[Column(\"{property.Name}\")]";
+                    propertyNameAndAttribute = new Tuple<string, string>(property.NewName, columnAttr);
+                }
+                else
+                {
+                    propertyNameAndAttribute = ScaffoldHelper.GeneratePropertyName(property.Name, Code, usePascalCase);
+                }
 
                 if (property.StoreType == "decimal" && useDecimalDataAnnotation)
                 {
