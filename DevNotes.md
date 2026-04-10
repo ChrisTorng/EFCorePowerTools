@@ -35,6 +35,8 @@ This is for supporting PostgreSQL.
 <ResourceDictionary Source="pack://application:,,,/EFCorePowerTools;component/Dialogs/Converter.xaml"/>
 ```
 
+This is been reverted later.
+
 ## Extensions
 
 1. In Exp Visual Studio 2026 Insiders.
@@ -103,6 +105,8 @@ if (File.Exists(devPathFile))
 9. Continue running, the new code should be running.
 
 You don't need to set breakpoint anymore, unless the `efreveng80/90/100.devpath.txt` is been removed.
+
+After closing Exp Visual Studio 2026 Insider, it may shows VSIX installer. Don't install/uninstall VSIX like EF Core Power Tools/EF Core Power Pack, just cancel the request in VSIX installer.
 
 ## Debug
 

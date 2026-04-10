@@ -5,14 +5,14 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
                  xmlns:xctk="clr-namespace:DropDownButtonLib.Controls;assembly=DropDownButtonLib"
-                 Title="{x:Static locale:ReverseEngineerLocale.ChooseDatabaseConnection}" 
+                 Title="{x:Static locale:ReverseEngineerLocale.ChooseDatabaseConnection}"
                  WindowStyle="SingleBorderWindow"
                  WindowStartupLocation="CenterOwner"
-                 ResizeMode="NoResize" 
+                 ResizeMode="NoResize"
                  ShowInTaskbar="False"
                  SizeToContent="WidthAndHeight"
-                 mc:Ignorable="d" 
-                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                 mc:Ignorable="d"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:viewModels="clr-namespace:EFCorePowerTools.ViewModels"
                  Loaded="Window_Loaded"
@@ -29,8 +29,8 @@
     <dw:DialogWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/EFCorePowerTools;component/Dialogs/Style.xaml"/>
-                <ResourceDictionary Source="pack://application:,,,/EFCorePowerTools;component/Dialogs/Converter.xaml"/>
+                <ResourceDictionary Source="Style.xaml"/>
+                <ResourceDictionary Source="Converter.xaml"/>
                 <ResourceDictionary>
                     <Style x:Key="SourceSelectionComboBoxStyle" TargetType="ComboBox">
                         <Setter Property="Margin" Value="0, 12, 0, 12"/>
@@ -85,7 +85,7 @@
             <!-- Here you can specify the Items including the Tooltip for each Item-->
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding Path=DisplayName}" 
+                        <TextBlock Text="{Binding Path=DisplayName}"
                       ToolTip="{Binding Path=ToolTip}"  />
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
@@ -101,12 +101,12 @@
             <xctk:DropDownButton Grid.Column="2"
                               Width="72"
                               Margin="12,12,0,12"
-                              Content="{x:Static locale:ReverseEngineerLocale.Add}"                              
+                              Content="{x:Static locale:ReverseEngineerLocale.Add}"
                               TabIndex="2"
                               >
                 <xctk:DropDownButton.DropDownContent>
                     <StackPanel>
-                        <MenuItem 
+                        <MenuItem
                             Header="{x:Static locale:ReverseEngineerLocale.AddDatabaseConnection}"
                             Command="{Binding AddDatabaseConnectionCommand}"
                             ToolTip="{x:Static locale:ReverseEngineerLocale.AddDatabaseConnectionTip}"
@@ -115,7 +115,7 @@
                                 <Image Source="pack://application:,,,/EFCorePowerTools;component/Resources/ConnectToDatabase.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem 
+                        <MenuItem
                             Header="{x:Static locale:ReverseEngineerLocale.AddExternalDacPac}"
                             Command="{Binding AddDatabaseDefinitionCommand}"
                             ToolTip="{x:Static locale:ReverseEngineerLocale.AddExternalDacPac}"
@@ -124,7 +124,7 @@
                                 <Image Source="pack://application:,,,/EFCorePowerTools;component/Resources/DatabaseSchema.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem 
+                        <MenuItem
                             Header="{x:Static locale:ReverseEngineerLocale.AddAdhocDatabaseConnection}"
                             Command="{Binding AddAdhocDatabaseConnectionCommand}"
                             ToolTip="{x:Static locale:ReverseEngineerLocale.AddAdhocDatabaseConnectionTip}"
@@ -133,14 +133,14 @@
                                 <Image Source="pack://application:,,,/EFCorePowerTools;component/Resources/ConnectToDatabase.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        
+
                     </StackPanel>
                 </xctk:DropDownButton.DropDownContent>
             </xctk:DropDownButton>
 
         </Grid>
 
-        <TextBlock Grid.Row="1" 
+        <TextBlock Grid.Row="1"
                    Text="{x:Static locale:ReverseEngineerLocale.EFCoreVersionTip}"/>
 
         <Grid Grid.Row="2"
@@ -164,21 +164,21 @@
                   SelectedValue="{Binding CodeGenerationMode, Mode=TwoWay}" />
         </Grid>
 
-        <StackPanel 
-                    Grid.Row="3" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Left" 
+        <StackPanel
+                    Grid.Row="3"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Left"
                     VerticalAlignment="Center">
             <CheckBox x:Name="FilterSchemas" IsTabStop="False" IsChecked="{Binding FilterSchemas}">
                 <TextBlock Text="{x:Static locale:ReverseEngineerLocale.FilterSchemas}" />
             </CheckBox>
         </StackPanel>
 
-        <StackPanel 
+        <StackPanel
                     Grid.Row="3"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
-                    VerticalAlignment="Center" 
+                    VerticalAlignment="Center"
                     Margin="0,5">
             <dw:DialogButton IsTabStop="False"
                              Style="{StaticResource SourceSelectionButtonStyle}"
@@ -190,12 +190,12 @@
         <StackPanel Grid.Row="4"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
-                    VerticalAlignment="Center"  
+                    VerticalAlignment="Center"
                     Margin="0,5,0,0">
             <TextBlock
                 ToolTip="{x:Static locale:ReverseEngineerLocale.ReleaseNotes}"
                 Margin="12,5,12,0">
-                <Hyperlink                    
+                <Hyperlink
                     x:Name="ReleaseNotesLink"
                     RequestNavigate="ReleaseNotesLink_RequestNavigate"
                     NavigateUri="https://github.com/ErikEJ/EFCorePowerTools/wiki/Release-notes"/>
