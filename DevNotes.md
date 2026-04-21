@@ -6,19 +6,23 @@ This is for supporting PostgreSQL.
 
 `global.json`:
 ```
+"allowPrerelease": false,
 "rollForward": "latestPatch"
 ```
 ↓
 ```
+"allowPrerelease": true,
 "rollForward": "latestFeature"
 ```
 
 `EFCorePowerTools.csproj`:
 ```
+<SignAssembly>true</SignAssembly>
 <Reference Include="Microsoft.VisualStudio.TemplateWizardInterface, Version=17.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
 ```
 ↓
 ```
+<SignAssembly>false</SignAssembly>
 <PackageReference Include="Microsoft.VisualStudio.TemplateWizardInterface" Version="17.10.40170" />
 ```
 
@@ -35,7 +39,7 @@ This is for supporting PostgreSQL.
 <ResourceDictionary Source="pack://application:,,,/EFCorePowerTools;component/Dialogs/Converter.xaml"/>
 ```
 
-This is been reverted later.
+This is been reverted later. Sometimes it's necessary, sometimes not. I don't know why.
 
 ## Extensions
 
@@ -134,3 +138,8 @@ After closing Exp Visual Studio 2026 Insider, it may shows VSIX installer. Don't
 Problem occurred while extracting the vsix to the experimental extensions path. The process cannot access the file '%LOCALAPPDATA%\Microsoft\VisualStudio\18.0_0624a8cbExp\Extensions\ErikEJ\EF Core Power Tools\2.6.0\AdysTech.CredentialManager.dll' because it is being used by another process.
 ```
    As long as `EFCorePowerTools\src\Core\efreveng80\bin\Debug\net8.0\RevEng.Core.80.dll` is updated, the Refresh will use the newest one.
+
+## Update zip
+
+1. Run `RevEng\efreveng80\BuildCmdlineTool.cmd`, it will generate `EFCorePowerTools\efreveng80.exe.zip`.
+2. Delete `%TEMP%\efreveng8.2.6.0.1` folder if exists. (It's `C:\Users\<user>\AppData\Local\Temp\efreveng8.2.6.0.1`) If the folder isn't deleted, it won't extract the new zip file, and keep using the old extracted one.
