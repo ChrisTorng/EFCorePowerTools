@@ -98,11 +98,10 @@ public class Scaffolder
             if (!string.IsNullOrWhiteSpace(property.NewName))
             {
                 var renamed = Code.Identifier(property.NewName);
-                propertyNameAndAttribute = Tuple.Create(
-                    renamed,
-                    renamed.TrimStart('@').Equals(property.Name, StringComparison.Ordinal)
-                        ? null
-                        : $"[Column({Code.Literal(property.Name)})]");
+                var columnAttribute = renamed.TrimStart('@').Equals(property.Name, StringComparison.Ordinal)
+                    ? null
+                    : $"[Column({Code.Literal(property.Name)})]";
+                propertyNameAndAttribute = Tuple.Create(renamed, columnAttribute);
             }
 
             if (property.StoreType == "decimal" && useDecimalDataAnnotation)
