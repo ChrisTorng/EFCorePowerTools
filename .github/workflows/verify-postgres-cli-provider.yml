@@ -1,0 +1,40 @@
+name: Verify PostgreSQL CLI provider regression
+on:
+  push:
+    branches: [verify/postgres-cli-provider]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 883f1cb729ae8d7681bb114bab18f31d51d67c81
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Baseline - regression tests must fail
+        shell: bash
+        run: |
+          set +e
+          dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj --filter 'FullyQualifiedName~ShortProviderNameRoundTrips|FullyQualifiedName~PostgreSqlProviderAliasesResolve|FullyQualifiedName~MainAsyncReturnsOneForUnknownProviderWithoutThrowing' --logger 'trx;LogFileName=baseline.trx' --results-directory /tmp/efpt-baseline
+          status=$?
+          set -e
+          test "$status" -ne 0
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse('/tmp/efpt-baseline/baseline.trx').getroot()
+          failed = [e.get('testName', '') for e in root.findall('.//{*}UnitTestResult') if e.get('outcome') == 'Failed']
+          print('Baseline failures:', failed)
+          for name in ('ShortProviderNameRoundTrips', 'PostgreSqlProviderAliasesResolve', 'MainAsyncReturnsOneForUnknownProviderWithoutThrowing'):
+              assert any(name in x for x in failed), name
+          PY
+      - uses: actions/checkout@v7
+        with:
+          ref: 25560176e7d7791f3a539ee728b9cd94851ab46f
+      - name: Fixed - regression tests must pass
+        run: dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj --filter 'FullyQualifiedName~ShortProviderNameRoundTrips|FullyQualifiedName~PostgreSqlProviderAliasesResolve|FullyQualifiedName~MainAsyncReturnsOneForUnknownProviderWithoutThrowing' --logger 'trx;LogFileName=fixed.trx' --results-directory /tmp/efpt-fixed
+      - name: Full core suite
+        run: dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj --no-build
