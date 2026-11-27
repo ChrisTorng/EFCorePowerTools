@@ -1,0 +1,68 @@
+name: Package PostgreSQL VSIX fix
+on:
+  push:
+    branches: [verify/postgres-cli-provider]
+    paths: [.github/workflows/package-postgres-vsix.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: windows-latest
+    env:
+      VERSION: 2.6.1846
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 25560176e7d7791f3a539ee728b9cd94851ab46f
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - uses: microsoft/setup-msbuild@v3
+      - name: Update VSIX version
+        shell: pwsh
+        working-directory: src
+        run: |
+          ((Get-Content GUI/EFCorePowerTools/Properties/AssemblyInfo.cs -Raw) -Replace '2\.6\.0\.1', "$env:VERSION") | Set-Content GUI/EFCorePowerTools/Properties/AssemblyInfo.cs
+          ((Get-Content GUI/EFCorePowerTools/source.extension.vsixmanifest -Raw) -Replace 'Version="2\.6\.0"', "Version=`"$env:VERSION`"") | Set-Content GUI/EFCorePowerTools/source.extension.vsixmanifest
+          ((Get-Content GUI/PowerToolsExtensionPack/source.extension.vsixmanifest -Raw) -Replace 'Version="2\.6\.0"', "Version=`"$env:VERSION`"") | Set-Content GUI/PowerToolsExtensionPack/source.extension.vsixmanifest
+      - name: Build embedded reverse engineering tool
+        shell: cmd
+        working-directory: src/Core/efreveng100
+        run: call BuildCmdlineTool.cmd
+      - name: Verify embedded tool
+        shell: pwsh
+        run: |
+          7z t src/GUI/lib/efreveng100.exe.zip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          7z l src/GUI/lib/efreveng100.exe.zip | Select-String 'efreveng100.exe'
+      - name: Restore and build VSIX
+        shell: pwsh
+        working-directory: src
+        run: msbuild EFCorePowerTools.slnx /restore /p:Configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal /v:m
+      - name: Verify and stage VSIX
+        shell: pwsh
+        run: |
+          $file = 'src/GUI/EFCorePowerTools/bin/Release/EFCorePowerTools.vsix'
+          if (!(Test-Path $file)) { throw "VSIX missing" }
+          7z t $file
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          7z x $file -o"$env:RUNNER_TEMP/vsix-check" -y
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          [xml]$manifest = Get-Content "$env:RUNNER_TEMP/vsix-check/extension.vsixmanifest"
+          if ($manifest.PackageManifest.Metadata.Identity.Version -ne $env:VERSION) { throw "Unexpected VSIX version" }
+          foreach ($required in @('EFCorePowerTools.dll','RevEng.Common.dll','efreveng100.exe.zip')) {
+            if (!(Get-ChildItem "$env:RUNNER_TEMP/vsix-check" -Recurse -Filter $required)) { throw "Missing $required" }
+          }
+          New-Item -ItemType Directory -Force packages | Out-Null
+          Copy-Item $file "packages/EFCorePowerTools-$env:VERSION-postgresfix.vsix"
+          Get-FileHash "packages/EFCorePowerTools-$env:VERSION-postgresfix.vsix"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: EFCorePowerTools-VSIX-postgresfix
+          path: packages/*.vsix
+          if-no-files-found: error
+      - name: Upload to existing fork prerelease
+        shell: pwsh
+        run: gh release upload v10.1.1621-postgresfix.1 "packages/EFCorePowerTools-$env:VERSION-postgresfix.vsix" --repo "$env:GITHUB_REPOSITORY" --clobber
