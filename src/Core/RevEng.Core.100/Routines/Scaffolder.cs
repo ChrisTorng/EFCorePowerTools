@@ -95,6 +95,15 @@ public class Scaffolder
         foreach (var property in resultElements.OrderBy(e => e.Ordinal))
         {
             var propertyNameAndAttribute = ScaffoldHelper.GeneratePropertyName(property.Name, Code, usePascalCase);
+            if (!string.IsNullOrWhiteSpace(property.NewName))
+            {
+                var renamed = Code.Identifier(property.NewName);
+                propertyNameAndAttribute = Tuple.Create(
+                    renamed,
+                    renamed.TrimStart('@').Equals(property.Name, StringComparison.Ordinal)
+                        ? null
+                        : $"[Column({Code.Literal(property.Name)})]");
+            }
 
             if (property.StoreType == "decimal" && useDecimalDataAnnotation)
             {

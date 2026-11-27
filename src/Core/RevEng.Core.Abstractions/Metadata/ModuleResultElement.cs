@@ -4,6 +4,8 @@ public class ModuleResultElement
 {
     public string Name { get; set; }
 
+    public string NewName { get; set; }
+
     public string StoreType { get; set; }
 
     public int Ordinal { get; set; }

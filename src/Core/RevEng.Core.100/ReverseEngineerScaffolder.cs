@@ -280,7 +280,7 @@ public class ReverseEngineerScaffolder : IReverseEngineerScaffolder
         return new SavedModelFiles(contextPath, additionalFiles);
     }
 
-    private static void ApplyRenamers(IEnumerable<SqlObjectBase> sqlObjects, List<Schema> renamers)
+    internal static void ApplyRenamers(IEnumerable<SqlObjectBase> sqlObjects, List<Schema> renamers)
     {
         if (renamers == null || renamers.Count == 0)
         {
@@ -293,13 +293,26 @@ public class ReverseEngineerScaffolder : IReverseEngineerScaffolder
 
             if (schema != null)
             {
-                if (schema.Tables != null && schema.Tables.Exists(t => t.Name == sqlObject.Name))
+                var tableRenamer = schema.Tables?.SingleOrDefault(t => t.Name == sqlObject.Name);
+                if (tableRenamer != null)
                 {
-                    sqlObject.NewName = schema.Tables.SingleOrDefault(t => t.Name == sqlObject.Name)?.NewName;
+                    sqlObject.NewName = tableRenamer.NewName;
                 }
                 else if (!string.IsNullOrEmpty(schema.TableRegexPattern) && schema.TablePatternReplaceWith != null)
                 {
                     sqlObject.NewName = RegexNameReplace(schema.TableRegexPattern, sqlObject.Name, schema.TablePatternReplaceWith);
+                }
+
+                if (sqlObject is Routine routine && tableRenamer?.Columns?.Count > 0)
+                {
+                    foreach (var resultElement in routine.Results.SelectMany(resultSet => resultSet))
+                    {
+                        var column = tableRenamer.Columns.FirstOrDefault(c => c.Name == resultElement.Name);
+                        if (!string.IsNullOrWhiteSpace(column?.NewName))
+                        {
+                            resultElement.NewName = column.NewName;
+                        }
+                    }
                 }
             }
         }
