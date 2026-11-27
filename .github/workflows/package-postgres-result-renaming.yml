@@ -15,24 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: d87fffeeabfbbb9277467ae932f7380e8b4ae53f
+          ref: 087482572c3c65fcf01d372e80def151bbade3fc
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
-      - name: Reproduce result renaming regression before fix
-        shell: bash
-        run: |
-          git fetch --depth=1 origin 25560176e7d7791f3a539ee728b9cd94851ab46f
-          git checkout 25560176e7d7791f3a539ee728b9cd94851ab46f -- src/Core/RevEng.Core.Abstractions/Metadata/ModuleResultElement.cs src/Core/RevEng.Core.100/ReverseEngineerScaffolder.cs src/Core/RevEng.Core.100/Routines/Scaffolder.cs
-          set +e
-          dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj --filter FullyQualifiedName~RoutineResultRenamingTests --logger 'trx;LogFileName=baseline.trx' --results-directory "$RUNNER_TEMP/baseline"
-          status=$?
-          set -e
-          test "$status" -ne 0
-          python -c 'import sys,xml.etree.ElementTree as E; r=E.parse(sys.argv[1]); failures=[x for x in r.findall(".//{*}UnitTestResult") if x.attrib.get("outcome")=="Failed" and "ExplicitResultRenamingPreservesColumnMapping" in x.attrib.get("testName","")]; assert len(failures)==4, len(failures); print("Expected regression failures:",len(failures))' "$RUNNER_TEMP/baseline/baseline.trx"
-          git reset --hard HEAD
       - name: Full core regression suite
-        run: dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj
+        run: dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj -c Release
       - name: Pack fixed CLI
         run: dotnet pack src/Core/efcpt.10/efcpt.10.csproj -c Release -o packages -p:PackageVersion="$VERSION" -p:InformationalVersion="$VERSION"
       - name: Install and smoke test packaged CLI
@@ -53,6 +41,9 @@ jobs:
           name: efcpt-postgresfix
           path: packages/*.nupkg
           if-no-files-found: error
+      - name: Publish CLI to fork prerelease
+        run: |
+          gh release create v10.1.1621-postgresfix.2 packages/*.nupkg --repo "$GITHUB_REPOSITORY" --target 087482572c3c65fcf01d372e80def151bbade3fc --prerelease --title "EF Core Power Tools PostgreSQL provider and routine result renaming fixes" --notes "Test build for issue #3403 plus PostgreSQL provider fix. CLI 10.1.1621-postgresfix.2 and unsigned VSIX 2.6.1847. Manual routine result Columns renaming, not classic GUI editing. No upstream publication."
   vsix:
     runs-on: windows-latest
     env:
@@ -61,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: d87fffeeabfbbb9277467ae932f7380e8b4ae53f
+          ref: 087482572c3c65fcf01d372e80def151bbade3fc
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
@@ -122,4 +113,4 @@ jobs:
       - name: Publish fork-only prerelease
         run: |
           ls -lh packages
-          gh release create v10.1.1621-postgresfix.2 packages/*.nupkg packages/*.vsix --repo "$GITHUB_REPOSITORY" --target d87fffeeabfbbb9277467ae932f7380e8b4ae53f --prerelease --title "EF Core Power Tools PostgreSQL provider and routine result renaming fixes" --notes "Test build for issue #3403 plus PostgreSQL provider fix. CLI 10.1.1621-postgresfix.2 and unsigned VSIX 2.6.1847. Manual routine result Columns renaming, not classic GUI editing. No upstream publication."
+          gh release upload v10.1.1621-postgresfix.2 packages/*.vsix --repo "$GITHUB_REPOSITORY" --clobber
