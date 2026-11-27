@@ -58,7 +58,7 @@ public static class Providers
             DatabaseType.Undefined => "Undefined",
             DatabaseType.SQLServer => "mssql",
             DatabaseType.SQLite => "sqlite",
-            DatabaseType.Npgsql => "npgsql",
+            DatabaseType.Npgsql => "postgres",
             DatabaseType.Mysql => "mysql",
             DatabaseType.Oracle => "oracle",
             DatabaseType.SQLServerDacpac => "mssql",
@@ -405,7 +405,7 @@ public static class Providers
         },
         {
             "Npgsql.EntityFrameworkCore.PostgreSQL",
-            new List<string> { "postgres", "postgresql" }
+            new List<string> { "postgres", "postgresql", "npgsql" }
         },
         {
             "Pomelo.EntityFrameworkCore.MySql",
