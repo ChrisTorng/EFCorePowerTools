@@ -1,0 +1,124 @@
+name: Package PostgreSQL provider and routine renaming fixes
+on:
+  push:
+    branches: [verify/postgres-result-renaming]
+    paths: [.github/workflows/package-postgres-result-renaming.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  cli:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: 10.1.1621-postgresfix.2
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: d87fffeeabfbbb9277467ae932f7380e8b4ae53f
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Reproduce result renaming regression before fix
+        shell: bash
+        run: |
+          git checkout 25560176e7d7791f3a539ee728b9cd94851ab46f -- src/Core/RevEng.Core.Abstractions/Metadata/ModuleResultElement.cs src/Core/RevEng.Core.100/ReverseEngineerScaffolder.cs src/Core/RevEng.Core.100/Routines/Scaffolder.cs
+          set +e
+          dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj --filter FullyQualifiedName~RoutineResultRenamingTests --logger 'trx;LogFileName=baseline.trx' --results-directory "$RUNNER_TEMP/baseline"
+          status=$?
+          set -e
+          test "$status" -ne 0
+          python -c 'import sys,xml.etree.ElementTree as E; r=E.parse(sys.argv[1]); failures=[x for x in r.findall(".//{*}UnitTestResult") if x.attrib.get("outcome")=="Failed" and "ExplicitResultRenamingPreservesColumnMapping" in x.attrib.get("testName","")]; assert len(failures)==4, len(failures); print("Expected regression failures:",len(failures))' "$RUNNER_TEMP/baseline/baseline.trx"
+          git reset --hard HEAD
+      - name: Full core regression suite
+        run: dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj
+      - name: Pack fixed CLI
+        run: dotnet pack src/Core/efcpt.10/efcpt.10.csproj -c Release -o packages -p:PackageVersion="$VERSION" -p:InformationalVersion="$VERSION"
+      - name: Install and smoke test packaged CLI
+        shell: bash
+        run: |
+          dotnet tool install ErikEJ.EFCorePowerTools.Cli --tool-path "$RUNNER_TEMP/efcpt-test" --add-source "$PWD/packages" --version "$VERSION"
+          set +e
+          "$RUNNER_TEMP/efcpt-test/efcpt" 'Host=localhost;Database=test;Username=test' unknown-provider > "$RUNNER_TEMP/unknown-provider.log" 2>&1
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP/unknown-provider.log"
+          test "$status" -eq 1
+          grep -F "$VERSION" "$RUNNER_TEMP/unknown-provider.log"
+          grep -F "Unknown provider 'unknown-provider'" "$RUNNER_TEMP/unknown-provider.log"
+          ! grep -q 'ArgumentOutOfRangeException' "$RUNNER_TEMP/unknown-provider.log"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: efcpt-postgresfix
+          path: packages/*.nupkg
+          if-no-files-found: error
+  vsix:
+    runs-on: windows-latest
+    env:
+      VERSION: 2.6.1847
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: d87fffeeabfbbb9277467ae932f7380e8b4ae53f
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - uses: microsoft/setup-msbuild@v3
+      - name: Update VSIX version
+        shell: pwsh
+        working-directory: src
+        run: |
+          ((Get-Content GUI/EFCorePowerTools/Properties/AssemblyInfo.cs -Raw) -Replace '2\.6\.0\.1', "$env:VERSION") | Set-Content GUI/EFCorePowerTools/Properties/AssemblyInfo.cs
+          ((Get-Content GUI/EFCorePowerTools/source.extension.vsixmanifest -Raw) -Replace 'Version="2\.6\.0"', "Version=`"$env:VERSION`"") | Set-Content GUI/EFCorePowerTools/source.extension.vsixmanifest
+          ((Get-Content GUI/PowerToolsExtensionPack/source.extension.vsixmanifest -Raw) -Replace 'Version="2\.6\.0"', "Version=`"$env:VERSION`"") | Set-Content GUI/PowerToolsExtensionPack/source.extension.vsixmanifest
+      - name: Build embedded reverse engineering tool
+        shell: cmd
+        working-directory: src/Core/efreveng100
+        run: call BuildCmdlineTool.cmd
+      - name: Verify embedded tool
+        shell: pwsh
+        run: |
+          7z t src/GUI/lib/efreveng100.exe.zip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          7z l src/GUI/lib/efreveng100.exe.zip | Select-String 'efreveng100.exe'
+      - name: Restore and build VSIX
+        shell: pwsh
+        working-directory: src
+        run: msbuild EFCorePowerTools.slnx /restore /p:Configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal /v:m
+      - name: Verify and stage VSIX
+        shell: pwsh
+        run: |
+          $file = 'src/GUI/EFCorePowerTools/bin/Release/EFCorePowerTools.vsix'
+          if (!(Test-Path $file)) { throw "VSIX missing" }
+          7z t $file
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          7z x $file -o"$env:RUNNER_TEMP/vsix-check" -y
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          [xml]$manifest = Get-Content "$env:RUNNER_TEMP/vsix-check/extension.vsixmanifest"
+          if ($manifest.PackageManifest.Metadata.Identity.Version -ne $env:VERSION) { throw "Unexpected VSIX version" }
+          foreach ($required in @('EFCorePowerTools.dll','RevEng.Common.dll','efreveng100.exe.zip')) {
+            if (!(Get-ChildItem "$env:RUNNER_TEMP/vsix-check" -Recurse -Filter $required)) { throw "Missing $required" }
+          }
+          New-Item -ItemType Directory -Force packages | Out-Null
+          Copy-Item $file "packages/EFCorePowerTools-$env:VERSION-postgresfix.vsix"
+          Get-FileHash "packages/EFCorePowerTools-$env:VERSION-postgresfix.vsix"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: EFCorePowerTools-VSIX-postgresfix
+          path: packages/*.vsix
+          if-no-files-found: error
+  release:
+    needs: [cli, vsix]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: packages
+          merge-multiple: true
+      - name: Publish fork-only prerelease
+        run: |
+          ls -lh packages
+          gh release create v10.1.1621-postgresfix.2 packages/*.nupkg packages/*.vsix --repo "$GITHUB_REPOSITORY" --target d87fffeeabfbbb9277467ae932f7380e8b4ae53f --prerelease --title "EF Core Power Tools PostgreSQL provider and routine result renaming fixes" --notes "Test build for issue #3403 plus PostgreSQL provider fix. CLI 10.1.1621-postgresfix.2 and unsigned VSIX 2.6.1847. Manual routine result Columns renaming, not classic GUI editing. No upstream publication."
