@@ -20,7 +20,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Full core regression suite
-        run: dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj -c Release
+        run: dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj -c Debug
       - name: Pack fixed CLI
         run: dotnet pack src/Core/efcpt.10/efcpt.10.csproj -c Release -o packages -p:PackageVersion="$VERSION" -p:InformationalVersion="$VERSION"
       - name: Install and smoke test packaged CLI
