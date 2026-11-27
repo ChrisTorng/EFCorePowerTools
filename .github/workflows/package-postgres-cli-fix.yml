@@ -1,0 +1,44 @@
+name: Package PostgreSQL CLI fix
+on:
+  push:
+    branches: [verify/postgres-cli-provider]
+    paths: [.github/workflows/package-postgres-cli-fix.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: 10.1.1621-postgresfix.1
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 25560176e7d7791f3a539ee728b9cd94851ab46f
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Pack fixed CLI
+        run: dotnet pack src/Core/efcpt.10/efcpt.10.csproj -c Release -o packages -p:PackageVersion="$VERSION" -p:InformationalVersion="$VERSION"
+      - name: Install and smoke test packaged CLI
+        shell: bash
+        run: |
+          dotnet tool install ErikEJ.EFCorePowerTools.Cli --tool-path "$RUNNER_TEMP/efcpt-test" --add-source "$PWD/packages" --version "$VERSION"
+          "$RUNNER_TEMP/efcpt-test/efcpt" --version
+          set +e
+          "$RUNNER_TEMP/efcpt-test/efcpt" 'Host=localhost;Database=test;Username=test' unknown-provider > "$RUNNER_TEMP/unknown-provider.log" 2>&1
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP/unknown-provider.log"
+          test "$status" -eq 1
+          grep -F "Unknown provider 'unknown-provider'" "$RUNNER_TEMP/unknown-provider.log"
+          ! grep -q 'ArgumentOutOfRangeException' "$RUNNER_TEMP/unknown-provider.log"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: efcpt-postgresfix
+          path: packages/*.nupkg
+          if-no-files-found: error
+      - name: Publish fork-only prerelease
+        run: |
+          gh release create "v$VERSION" packages/*.nupkg --repo "$GITHUB_REPOSITORY" --target 25560176e7d7791f3a539ee728b9cd94851ab46f --prerelease --title "EF Core Power Tools CLI PostgreSQL fix ($VERSION)" --notes "Unofficial test build from the PostgreSQL CLI provider fix branch. No NuGet.org or Marketplace publication. Baseline regression tests reproduced 3 failures; fixed regression tests 12/12 and full core suite 276/276 passed in run 45932044362."
