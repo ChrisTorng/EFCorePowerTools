@@ -90,6 +90,20 @@ namespace NUnitTestCore
             Assert.Equal(1, exitCode);
         }
 
+        [Fact]
+        public async Task MainAsyncReturnsOneForUnknownProviderWithoutThrowing()
+        {
+            var exitCode = await Program.MainAsync(new[]
+            {
+                "Host=localhost;Database=test;Username=test",
+                "unknown-provider",
+                "-i", configPath,
+                "-o", workDirectory,
+            });
+
+            Assert.Equal(1, exitCode);
+        }
+
         private async Task<int> RunEfcptAsync(string dacpac, string config)
         {
             Environment.ExitCode = 0;

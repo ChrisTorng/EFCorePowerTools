@@ -10,6 +10,29 @@ namespace UnitTests
     public class ProvidersTests
     {
         [Theory]
+        [InlineData(DatabaseType.SQLServer, false)]
+        [InlineData(DatabaseType.SQLServerDacpac, true)]
+        [InlineData(DatabaseType.SQLite, false)]
+        [InlineData(DatabaseType.Npgsql, false)]
+        [InlineData(DatabaseType.Mysql, false)]
+        [InlineData(DatabaseType.Oracle, false)]
+        [InlineData(DatabaseType.Firebird, false)]
+        [InlineData(DatabaseType.Snowflake, false)]
+        public void ShortProviderNameRoundTrips(DatabaseType databaseType, bool isDacpac)
+        {
+            Assert.Equal(databaseType, databaseType.ToDatabaseShortName().ToDatabaseType(isDacpac));
+        }
+
+        [Theory]
+        [InlineData("postgres")]
+        [InlineData("postgresql")]
+        [InlineData("npgsql")]
+        public void PostgreSqlProviderAliasesResolve(string alias)
+        {
+            Assert.Equal(DatabaseType.Npgsql, alias.ToDatabaseType(false));
+        }
+
+        [Theory]
         [InlineData(4)]
         [InlineData(5)]
         public void LegacyOptionsMigrateBeforePackageSelection(int savedMode)
