@@ -22,6 +22,7 @@ jobs:
       - name: Reproduce result renaming regression before fix
         shell: bash
         run: |
+          git fetch --depth=1 origin 25560176e7d7791f3a539ee728b9cd94851ab46f
           git checkout 25560176e7d7791f3a539ee728b9cd94851ab46f -- src/Core/RevEng.Core.Abstractions/Metadata/ModuleResultElement.cs src/Core/RevEng.Core.100/ReverseEngineerScaffolder.cs src/Core/RevEng.Core.100/Routines/Scaffolder.cs
           set +e
           dotnet test src/Core/NUnitTestCore/NUnitTestCore.csproj --filter FullyQualifiedName~RoutineResultRenamingTests --logger 'trx;LogFileName=baseline.trx' --results-directory "$RUNNER_TEMP/baseline"
