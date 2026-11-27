@@ -25,13 +25,13 @@ jobs:
         shell: bash
         run: |
           dotnet tool install ErikEJ.EFCorePowerTools.Cli --tool-path "$RUNNER_TEMP/efcpt-test" --add-source "$PWD/packages" --version "$VERSION"
-          "$RUNNER_TEMP/efcpt-test/efcpt" --version
           set +e
           "$RUNNER_TEMP/efcpt-test/efcpt" 'Host=localhost;Database=test;Username=test' unknown-provider > "$RUNNER_TEMP/unknown-provider.log" 2>&1
           status=$?
           set -e
           cat "$RUNNER_TEMP/unknown-provider.log"
           test "$status" -eq 1
+          grep -F "$VERSION" "$RUNNER_TEMP/unknown-provider.log"
           grep -F "Unknown provider 'unknown-provider'" "$RUNNER_TEMP/unknown-provider.log"
           ! grep -q 'ArgumentOutOfRangeException' "$RUNNER_TEMP/unknown-provider.log"
       - uses: actions/upload-artifact@v7
